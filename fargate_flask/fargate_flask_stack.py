@@ -32,6 +32,6 @@ class FargateFlaskStack(cdk.Stack):
             task_image_options=aws_ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=self.application_image,
             ),
-            memory_limit_mib=1024,
+            memory_limit_mib=2048,
             public_load_balancer=True,
         )
