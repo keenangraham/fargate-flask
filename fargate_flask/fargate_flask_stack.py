@@ -13,7 +13,7 @@ class FargateFlaskStack(cdk.Stack):
         self.vpc = aws_ec2.Vpc(
             self,
             'FargateVPC',
-            max_azs=2
+            cidr='172.31.0.0/16',
         )
         self.cluster = aws_ecs.Cluster(
             self,
@@ -27,11 +27,11 @@ class FargateFlaskStack(cdk.Stack):
             self,
             'FargateFlaskApp',
             cluster=self.cluster,
-            cpu=256,
+            cpu=1024,
             desired_count=1,
             task_image_options=aws_ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=self.application_image,
             ),
-            memory_limit_mib=512,
+            memory_limit_mib=1024,
             public_load_balancer=True,
         )
