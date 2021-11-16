@@ -4,7 +4,9 @@ EXPOSE 80
 
 ENV VIRTUAL_ENV=/opt/venv
 
-RUN apt-get update && apt-get install make
+RUN apt-get update
+
+RUN apt-get install make git -y
 
 RUN python -m venv $VIRTUAL_ENV
 
