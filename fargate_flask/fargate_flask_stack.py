@@ -31,3 +31,16 @@ class FargateFlaskStack(cdk.Stack):
             security_groups=[self.existing_resources.internal_network.security_group],
             assign_public_ip=True,
         )
+        self.fargate_service.target_group.configure_health_check(
+            interval=cdk.Duration.seconds(60),
+        )
+        self.scalable_task = self.fargate_service.service(
+            max_capacity=4,
+        )
+        self.scalable_task.scale_on_request_count(
+            'RequestCountScaling',
+            requests_per_target=4,
+            target_group=self.fargate_service.target_group,
+            scale_in_cooldown=cdk.Duration.seconds(60),
+            scale_out_cooldown=cdk.Duration.seconds(60),
+        )
