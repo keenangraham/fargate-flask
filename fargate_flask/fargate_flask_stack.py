@@ -34,7 +34,7 @@ class FargateFlaskStack(cdk.Stack):
         self.fargate_service.target_group.configure_health_check(
             interval=cdk.Duration.seconds(60),
         )
-        self.scalable_task = self.fargate_service.service(
+        self.scalable_task = self.fargate_service.service.auto_scale_task_count(
             max_capacity=4,
         )
         self.scalable_task.scale_on_request_count(
