@@ -5,6 +5,7 @@ from aws_cdk import core as cdk
 
 
 from fargate_flask.config import config
+from fargate_flask.resources.existing import ExistingResources
 from fargate_flask.fargate_flask_stack import FargateFlaskStack
 
 
@@ -13,15 +14,19 @@ ENVIRONMENT = cdk.Environment(
     region=config['region'],
 )
 
-
 app = cdk.App()
 
-
-FargateFlaskStack(
+existing_resources = ExistingResources(
     app,
-    'FargateFlaskStack',
+    'ExistingResources',
     env=ENVIRONMENT,
 )
 
+fargate_service = FargateFlaskStack(
+    app,
+    'FargateFlaskStack',
+    existing_resources=existing_resources,
+    env=ENVIRONMENT,
+)
 
 app.synth()

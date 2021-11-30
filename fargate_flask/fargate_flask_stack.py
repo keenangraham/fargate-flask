@@ -8,25 +8,16 @@ from fargate_flask.config import config
 
 class FargateFlaskStack(cdk.Stack):
 
-    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope, construct_id, existing_resources, **kwargs):
         super().__init__(scope, construct_id, **kwargs)
-        self.vpc = aws_ec2.Vpc(
-            self,
-            'FargateVPC',
-            cidr='172.31.0.0/16',
-        )
-        self.cluster = aws_ecs.Cluster(
-            self,
-            'FlaskCluster',
-            vpc=self.vpc
-        )
+        self.existing_resources = existing_resources
         self.application_image = aws_ecs.ContainerImage.from_asset(
             'fargate_flask/flask/'
         )
         self.fargate_service = aws_ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             'FargateFlaskApp',
-            cluster=self.cluster,
+            vpc=self.existing_resources.internal_network.vpc,
             cpu=1024,
             desired_count=1,
             task_image_options=aws_ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
@@ -34,4 +25,22 @@ class FargateFlaskStack(cdk.Stack):
             ),
             memory_limit_mib=2048,
             public_load_balancer=True,
+            certificate=self.existing_resources.encode_api_domain.domain_certificate,
+            domain_name=f'rnaget.{self.existing_resources.encode_api_domain.domain_name}',
+            domain_zone=self.existing_resources.encode_api_domain.hosted_zone,
+            security_groups=[self.existing_resources.internal_network.security_group],
+            assign_public_ip=True,
+        )
+        self.fargate_service.target_group.configure_health_check(
+            interval=cdk.Duration.seconds(60),
+        )
+        self.scalable_task = self.fargate_service.service.auto_scale_task_count(
+            max_capacity=4,
+        )
+        self.scalable_task.scale_on_request_count(
+            'RequestCountScaling',
+            requests_per_target=600,
+            target_group=self.fargate_service.target_group,
+            scale_in_cooldown=cdk.Duration.seconds(60),
+            scale_out_cooldown=cdk.Duration.seconds(60),
         )
